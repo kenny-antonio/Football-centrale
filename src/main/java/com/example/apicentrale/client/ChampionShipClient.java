@@ -47,7 +47,6 @@ public class ChampionShipClient {
                             .forEach(allPlayers::add);
                 }
             } catch (Exception e) {
-                // Log the error and continue with next API
                 System.err.println("Error fetching players from " + baseUrl + ": " + e.getMessage());
             }
         }
@@ -72,7 +71,6 @@ public class ChampionShipClient {
                             .forEach(allClubs::add);
                 }
             } catch (Exception e) {
-                // Log the error and continue with next API
                 System.err.println("Error fetching clubs from " + baseUrl + ": " + e.getMessage());
             }
         }

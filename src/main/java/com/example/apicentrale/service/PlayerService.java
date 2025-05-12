@@ -2,6 +2,7 @@ package com.example.apicentrale.service;
 
 import com.example.apicentrale.model.*;
 import com.example.apicentrale.repository.PlayerRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -9,12 +10,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class PlayerService {
-
-    private final PlayerRepository playerRepository;
-
-    public PlayerService(PlayerRepository playerRepository) {
-        this.playerRepository = playerRepository;
-    }
+    @Autowired
+    private PlayerRepository playerRepository;
 
     public List<PlayerRanking> getBestPlayers(int top, DurationUnit unit) {
         List<Player> players = playerRepository.findTopPlayers(top);

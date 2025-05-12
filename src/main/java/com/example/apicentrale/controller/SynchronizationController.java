@@ -17,8 +17,13 @@ public class SynchronizationController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> synchronize() {
-        synchronizationService.synchronizeData();
-        return ResponseEntity.ok().build();
+    public ResponseEntity<String> synchronize() {
+        try {
+            synchronizationService.synchronizeData();
+            return ResponseEntity.ok("Synchronisation réussie !");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Erreur lors de la synchronisation des données : " + e.getMessage());
+        }
     }
+
 }

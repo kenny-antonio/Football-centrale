@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 
 public class ClubRanking {
+    private String id;
+    private String name;
     private Integer rank;
     private Club club;
     private Integer rankingPoints;

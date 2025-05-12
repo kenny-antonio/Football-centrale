@@ -1,62 +1,61 @@
 package com.example.apicentrale.service;
 
 import com.example.apicentrale.model.*;
-import com.example.apicentrale.repository.ClubRepository;
 import org.springframework.stereotype.Service;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class ChampionShipService {
+    private final DataSource dataSource;
 
-    private final ClubRepository clubRepository;
-
-    public ChampionShipService(ClubRepository clubRepository) {
-        this.clubRepository = clubRepository;
+    public ChampionShipService(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     public List<ChampionShipRanking> getChampionshipRankings() {
-        Map<ChampionShip, List<Club>> clubsByChampionship = clubRepository.findAll()
-                .stream()
-                .collect(Collectors.groupingBy(Club::getChampionship));
+        String sql = "SELECT * FROM Club";
+        Map<ChampionShip, List<Club>> clubsByChampionship = new HashMap<>();
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                Club club = mapToClub(resultSet);
+                clubsByChampionship
+                        .computeIfAbsent(club.getChampionship(), k -> new ArrayList<>())
+                        .add(club);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la récupération des clubs", e);
+        }
 
         List<ChampionShipRanking> rankings = new ArrayList<>();
-
-        clubsByChampionship.forEach((championship, clubs) -> {
+        for (Map.Entry<ChampionShip, List<Club>> entry : clubsByChampionship.entrySet()) {
             ChampionShipRanking ranking = new ChampionShipRanking();
-            ranking.setChampionship(championship);
-
-            List<Integer> differences = clubs.stream()
-                    .map(c -> c.getScoredGoals() - c.getConcededGoals())
-                    .sorted()
-                    .collect(Collectors.toList());
-
-            double median = calculateMedian(differences);
-            ranking.setDifferenceGoalsMedian(median);
-
+            ranking.setChampionship(entry.getKey());
+            ranking.setClubs(entry.getValue());
             rankings.add(ranking);
-        });
-
-        // Sort by median (ascending - lower is better)
-        rankings.sort(Comparator.comparingDouble(ChampionShipRanking::getDifferenceGoalsMedian));
-
-        // Assign ranks
-        for (int i = 0; i < rankings.size(); i++) {
-            rankings.get(i).setRank(i + 1);
         }
 
         return rankings;
     }
 
-    private double calculateMedian(List<Integer> values) {
-        if (values.isEmpty()) return 0.0;
-
-        int size = values.size();
-        if (size % 2 == 0) {
-            return (values.get(size/2 - 1) + values.get(size/2)) / 2.0;
-        } else {
-            return values.get(size/2);
-        }
+    private Club mapToClub(ResultSet resultSet) throws SQLException {
+        Club club = new Club();
+        club.setId(resultSet.getString("id"));
+        club.setName(resultSet.getString("name"));
+        club.setRankingPoints(resultSet.getInt("ranking_points"));
+        club.setScoredGoals(resultSet.getInt("scored_goals"));
+        club.setConcededGoals(resultSet.getInt("conceded_goals"));
+        club.setCleanSheetNumber(resultSet.getInt("clean_sheet_number"));
+        club.setChampionship(ChampionShip.valueOf(resultSet.getString("championship_id")));
+        return club;
     }
 }

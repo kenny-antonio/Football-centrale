@@ -23,7 +23,7 @@ public class PlayerController {
     @GetMapping
     public List<PlayerRanking> getBestPlayers(
             @RequestParam(defaultValue = "5") int top,
-            @RequestParam DurationUnit playingTimeUnit) {
+            @RequestParam(defaultValue = "HOUR") DurationUnit playingTimeUnit) {
         return playerService.getBestPlayers(top, playingTimeUnit);
     }
 }
